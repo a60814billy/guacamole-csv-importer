@@ -27,6 +27,7 @@ class GuacamoleAPIClient:
         self.username = username
         self.password = password
         self.token = None
+        self.data_source = None
         self.session = requests.Session()
 
     def authenticate(self) -> bool:
@@ -48,7 +49,9 @@ class GuacamoleAPIClient:
             data = response.json()
             if "authToken" in data:
                 self.token = data["authToken"]
+                self.data_source = data["dataSource"]
                 logger.info("Successfully authenticated with Guacamole API")
+                logger.debug(f"Data source: {self.data_source}")
                 return True
             else:
                 logger.error("Authentication response did not contain auth token")
@@ -78,7 +81,7 @@ class GuacamoleAPIClient:
         Raises:
             ValueError: If not authenticated or API request fails
         """
-        url = f"{self.base_url}/session/data/mysql/connectionGroups"
+        url = f"{self.base_url}/session/data/{self.data_source}/connectionGroups"
 
         try:
             response = self.session.get(url, params=self._get_auth_params())

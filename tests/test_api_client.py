@@ -41,22 +41,16 @@ MOCK_AUTHENTICATED_RESPONSE = {
 
 
 @pytest.fixture
-def authenticated_client():
+def authenticated_client(responses):
     """Fixture for creating an authenticated GuacamoleAPIClient instance."""
-    with patch("requests.Session.post") as mock_post:
-        # Mock successful authentication response using the format from tokens.json
-        mock_response = Mock()
-        mock_response.json.return_value = MOCK_AUTHENTICATED_RESPONSE
-        mock_response.raise_for_status.return_value = None
-        mock_post.return_value = mock_response
-
-        client = GuacamoleAPIClient(
-            base_url="http://localhost:8080/guacamole/api",
-            username="admin",
-            password="password",
-        )
-        client.authenticate()
-        return client
+    mock_authenticated_response(responses)
+    client = GuacamoleAPIClient(
+        base_url="http://localhost:8080/guacamole/api",
+        username="guacadmin",
+        password="guacadmin",
+    )
+    client.authenticate()
+    return client
 
 
 class TestGuacamoleAPIClientInit:
@@ -82,6 +76,56 @@ class TestGuacamoleAPIClientInit:
             password="password",
         )
         assert client.base_url == "http://localhost:8080/guacamole/api"
+
+
+def mock_get_connection_groups_response(responses):
+    responses.get(
+        "http://localhost:8080/guacamole/api/session/data/postgresql/connectionGroups",
+        json={
+            "1": {
+                "name": "group-1",
+                "identifier": "1",
+                "parentIdentifier": "ROOT",
+                "type": "ORGANIZATIONAL",
+                "activeConnections": 0,
+                "attributes": {
+                    "max-connections": None,
+                    "max-connections-per-user": None,
+                    "enable-session-affinity": "",
+                },
+            },
+            "2": {
+                "name": "group-2",
+                "identifier": "2",
+                "parentIdentifier": "ROOT",
+                "type": "ORGANIZATIONAL",
+                "activeConnections": 0,
+                "attributes": {
+                    "max-connections": None,
+                    "max-connections-per-user": None,
+                    "enable-session-affinity": "",
+                },
+            },
+        },
+        match=[
+            matchers.query_param_matcher({"token": MOCK_AUTH_TOKEN}),
+        ],
+    )
+
+    responses.get(
+        "http://localhost:8080/guacamole/api/session/data/postgresql/connectionGroups",
+        json={
+            "message": "Permission Denied.",
+            "translatableMessage": {
+                "key": "APP.TEXT_UNTRANSLATED",
+                "variables": {"MESSAGE": "Permission Denied."},
+            },
+            "statusCode": None,
+            "expected": None,
+            "type": "PERMISSION_DENIED",
+        },
+        status=403,
+    )
 
 
 def mock_authenticated_response(responses):
@@ -156,9 +200,7 @@ class TestGuacamoleAPIClientGetAuthParams:
     def test_valid_token(self, authenticated_client):
         """Test _get_auth_params with a valid token."""
         auth_params = authenticated_client._get_auth_params()
-        assert auth_params == {
-            "token": "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
-        }
+        assert auth_params == {"token": MOCK_AUTH_TOKEN}
 
     def test_not_authenticated(self, client):
         """Test _get_auth_params when not authenticated."""
@@ -171,39 +213,31 @@ class TestGuacamoleAPIClientGetAuthParams:
 class TestGuacamoleAPIClientGetConnectionGroups:
     """Tests for GuacamoleAPIClient.get_connection_groups."""
 
-    def test_successful_retrieval(self, authenticated_client):
+    def test_successful_retrieval(self, authenticated_client, responses):
         """Test successful retrieval of connection groups."""
-        with patch("requests.Session.get") as mock_get:
-            # Mock successful response
-            mock_response = Mock()
-            mock_response.json.return_value = [
-                {"identifier": "1", "name": "Group 1"},
-                {"identifier": "2", "name": "Group 2"},
-            ]
-            mock_response.raise_for_status.return_value = None
-            mock_get.return_value = mock_response
+        mock_get_connection_groups_response(responses)
 
-            result = authenticated_client.get_connection_groups()
+        result = authenticated_client.get_connection_groups()
 
-            # Verify the request was made with correct parameters
-            mock_get.assert_called_once_with(
-                "http://localhost:8080/guacamole/api/session/data/mysql/connectionGroups",
-                params={
-                    "token": "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
-                },
-            )
+        # Verify the result
+        group_ids = result.keys()
+        assert len(group_ids) == 2
+        assert list(group_ids) == ["1", "2"]
+        assert result["1"]["name"] == "group-1"
+        assert result["1"]["type"] == "ORGANIZATIONAL"
+        assert result["1"]["parentIdentifier"] == "ROOT"
 
-            # Verify the result
-            assert len(result) == 2
-            assert result[0]["name"] == "Group 1"
-            assert result[1]["name"] == "Group 2"
+        assert result["2"]["name"] == "group-2"
+        assert result["2"]["type"] == "ORGANIZATIONAL"
+        assert result["2"]["parentIdentifier"] == "ROOT"
 
-    def test_authentication_failure(self, client):
+    def test_authentication_failure(self, bad_client, responses):
         """Test behavior when called without prior authentication."""
+        mock_get_connection_groups_response(responses)
         with pytest.raises(
             ValueError, match="Not authenticated. Call authenticate\\(\\) first."
         ):
-            client.get_connection_groups()
+            bad_client.get_connection_groups()
 
     def test_server_error(self, authenticated_client):
         """Test server error during retrieval."""
