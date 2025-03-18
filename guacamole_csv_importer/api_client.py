@@ -103,19 +103,28 @@ class GuacamoleAPIClient:
         Returns:
             ID of the created connection if successful, None otherwise
         """
-        url = f"{self.base_url}/session/data/mysql/connections"
+        url = f"{self.base_url}/session/data/{self.data_source}/connections"
 
         # Add parent identifier
         connection_data["parentIdentifier"] = parent_id
 
+        connection_data["attributes"] = {
+            "guacd-hostname": "guacd",
+            "guacd-port": "4822",
+            "guacd-encryption": "none",
+        }
+
         try:
             response = self.session.post(
-                url, params=self._get_auth_params(), json=connection_data
+                url,
+                params=self._get_auth_params(),
+                json=connection_data,
+                headers={"Content-Type": "application/json"},
             )
             response.raise_for_status()
 
             # Extract connection ID from response
-            connection_id = response.text.strip('"')
+            connection_id = response.json().get("identifier")
             logger.info(
                 f"Created connection '{connection_data.get('name')}' with ID {connection_id}"
             )

@@ -249,48 +249,99 @@ class TestGuacamoleAPIClientGetConnectionGroups:
                 authenticated_client.get_connection_groups()
 
 
+def mock_post_connection_create_response(responses):
+
+    request_json = {
+        "parentIdentifier": "ROOT",
+        "name": "Test Connection",
+        "protocol": "ssh",
+        "attributes": {
+            "guacd-hostname": "guacd",
+            "guacd-port": "4822",
+            "guacd-encryption": "none",
+        },
+        "parameters": {
+            "hostname": "localhost",
+            "port": "22",
+            "username": "guest",
+            "password": "pass",
+        },
+    }
+
+    # clone the request_json to avoid modifying the original
+    response_json = request_json.copy()
+    response_json["identifier"] = "10"
+    response_json["activeConnections"] = 0
+    response_json["attributes"] = {"guacd-encryption": "none"}
+
+    print(request_json)
+    responses.post(
+        "http://localhost:8080/guacamole/api/session/data/postgresql/connections",
+        json=response_json,
+        status=200,
+        match=[
+            matchers.query_param_matcher({"token": MOCK_AUTH_TOKEN}),
+            matchers.header_matcher({"Content-Type": "application/json"}),
+            matchers.json_params_matcher(request_json, strict_match=False),
+        ],
+    )
+
+    # responses.post(
+    #     "http://localhost:8080/guacamole/api/session/data/postgresql/connections",
+    #     json={
+    #         "message": "Permission Denied.",
+    #         "translatableMessage": {
+    #             "key": "APP.TEXT_UNTRANSLATED",
+    #             "variables": {"MESSAGE": "Permission Denied."},
+    #         },
+    #         "statusCode": None,
+    #         "expected": None,
+    #         "type": "PERMISSION_DENIED",
+    #     },
+    #     status=403,
+    # )
+
+
 class TestGuacamoleAPIClientCreateConnection:
     """Tests for GuacamoleAPIClient.create_connection."""
 
-    def test_successful_creation(self, authenticated_client):
+    def test_successful_creation(self, authenticated_client, responses):
         """Test successful creation of a connection."""
-        with patch("requests.Session.post") as mock_post:
-            # Mock successful response
-            mock_response = Mock()
-            mock_response.text = '"connection-123"'
-            mock_response.raise_for_status.return_value = None
-            mock_post.return_value = mock_response
+        mock_post_connection_create_response(responses)
 
-            connection_data = {
-                "name": "Test Connection",
-                "protocol": "rdp",
-                "parameters": {"hostname": "192.168.1.100", "port": "3389"},
-            }
+        connection_data = {
+            "name": "Test Connection",
+            "protocol": "ssh",
+            "parameters": {
+                "hostname": "localhost",
+                "port": "22",
+                "username": "guest",
+                "password": "pass",
+            },
+        }
 
-            result = authenticated_client.create_connection(connection_data)
-
-            # Verify the request was made with correct parameters
-            mock_post.assert_called_once_with(
-                "http://localhost:8080/guacamole/api/session/data/mysql/connections",
-                params={
-                    "token": "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
-                },
-                json={
-                    "name": "Test Connection",
-                    "protocol": "rdp",
-                    "parameters": {"hostname": "192.168.1.100", "port": "3389"},
-                    "parentIdentifier": "ROOT",
-                },
-            )
-
-            # Verify the result
-            assert result == "connection-123"
+        result = authenticated_client.create_connection(connection_data)
+        assert result == "10"
 
     def test_invalid_connection_data(self, authenticated_client):
         """Test creation with invalid connection data."""
         with patch("requests.Session.post") as mock_post:
             # Mock error response
-            mock_post.side_effect = RequestException("Invalid connection data")
+            mock_response = Mock()
+            # status 400
+            # response json with message
+            mock_response.status_code = 400
+            mock_response.json.return_value = {
+                "message": "Connection names must not be blank.",
+                "translatableMessage": {
+                    "key": "APP.TEXT_UNTRANSLATED",
+                    "variables": {"MESSAGE": "Connection names must not be blank."},
+                },
+                "statusCode": None,
+                "expected": None,
+                "type": "BAD_REQUEST",
+            }
+            mock_post.return_value = mock_response
 
             connection_data = {
                 "protocol": "rdp",  # Missing 'name' field
@@ -302,12 +353,12 @@ class TestGuacamoleAPIClientCreateConnection:
             # Verify the result is None
             assert result is None
 
-    def test_authentication_failure(self, client):
+    def test_authentication_failure(self, bad_client):
         """Test behavior when called without prior authentication."""
         with pytest.raises(
             ValueError, match="Not authenticated. Call authenticate\\(\\) first."
         ):
-            client.create_connection({"name": "Test"})
+            bad_client.create_connection({"name": "Test"})
 
     def test_server_error(self, authenticated_client):
         """Test server error during creation."""
