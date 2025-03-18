@@ -2,6 +2,7 @@
 
 import pytest
 from requests.exceptions import RequestException
+import responses
 from responses import matchers
 
 # Configuration constants
@@ -94,6 +95,16 @@ def handle_request_exception(func):
             raise ValueError(f"API request failed: {e}")
 
     return wrapper
+
+
+def mock_server_error(api_responses, url):
+    """Mocks a server error response for a given URL."""
+    api_responses.add(
+        method=responses.POST, url=url, body=RequestException("Server error")
+    )
+    api_responses.add(
+        method=responses.GET, url=url, body=RequestException("Server error")
+    )
 
 
 def mock_get_connection_groups_response(api_responses, auth_data):

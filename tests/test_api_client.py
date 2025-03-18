@@ -1,12 +1,10 @@
 """Tests for the Guacamole API client module."""
 
 import pytest
-from unittest.mock import patch, Mock
 from requests.exceptions import RequestException
 
 from guacamole_csv_importer.api_client import GuacamoleAPIClient
 
-from responses import matchers
 import pytest_responses  # noqa
 
 # Import from conftest.py
@@ -17,6 +15,7 @@ from .conftest import (
     mock_get_connection_groups_response,
     mock_post_connection_create_response,
     mock_post_connection_group,
+    mock_server_error,
 )
 
 
@@ -48,23 +47,35 @@ class TestGuacamoleAPIClientInit:
 class TestGuacamoleAPIClientAuthenticate:
     """Tests for GuacamoleAPIClient.authenticate."""
 
-    def test_successful_authentication(self, client, api_responses, auth_data):
+    @pytest.mark.parametrize(
+        "client_fixture, expected_result, expected_token",
+        [
+            (
+                "client",
+                True,
+                "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0",
+            ),
+            ("bad_client", False, None),
+        ],
+    )
+    def test_authentication(
+        self,
+        client_fixture,
+        expected_result,
+        expected_token,
+        request,
+        api_responses,
+        auth_data,
+    ):
         mock_authenticated_response(api_responses, auth_data)
+        client = request.getfixturevalue(client_fixture)
         result = client.authenticate()
-        assert result is True
-        assert client.token == auth_data["token"]
-
-    def test_failed_authentication(self, bad_client, api_responses, auth_data):
-        """Test failed authentication."""
-        mock_authenticated_response(api_responses, auth_data)
-        result = bad_client.authenticate()
-        # Verify the token remains None and the method returned False
-        assert bad_client.token is None
-        assert result is False
+        assert result == expected_result
+        assert client.token == expected_token
 
     def test_server_error(self, client, api_responses):
         """Test server error during authentication."""
-        api_responses.post(f"{BASE_URL}/tokens", body=RequestException("Server error"))
+        mock_server_error(api_responses, f"{BASE_URL}/tokens")
 
         result = client.authenticate()
 
@@ -120,9 +131,8 @@ class TestGuacamoleAPIClientGetConnectionGroups:
 
     def test_server_error(self, authenticated_client, api_responses):
         """Test server error during retrieval."""
-        api_responses.get(
-            f"{BASE_URL}/session/data/postgresql/connectionGroups",
-            body=RequestException("Server error"),
+        mock_server_error(
+            api_responses, f"{BASE_URL}/session/data/postgresql/connectionGroups"
         )
 
         with pytest.raises(ValueError, match="API request failed: Server error"):
@@ -132,41 +142,63 @@ class TestGuacamoleAPIClientGetConnectionGroups:
 class TestGuacamoleAPIClientCreateConnection:
     """Tests for GuacamoleAPIClient.create_connection."""
 
-    def test_successful_creation(
-        self, authenticated_client, api_responses, auth_data, connection_data
-    ):
-        """Test successful creation of a connection."""
-        mock_post_connection_create_response(api_responses, auth_data, connection_data)
-
-        result = authenticated_client.create_connection(connection_data)
-        assert result == "10"
-
-    def test_invalid_connection_data(self, authenticated_client, api_responses):
-        """Test creation with invalid connection data."""
-        api_responses.post(
-            f"{BASE_URL}/session/data/postgresql/connections",
-            json={
-                "message": "Connection names must not be blank.",
-                "translatableMessage": {
-                    "key": "APP.TEXT_UNTRANSLATED",
-                    "variables": {"MESSAGE": "Connection names must not be blank."},
+    @pytest.mark.parametrize(
+        "connection_data, expected_result, mock_response",
+        [
+            (
+                {  # Valid connection data
+                    "name": "Test Connection",
+                    "protocol": "ssh",
+                    "parameters": {
+                        "hostname": "localhost",
+                        "port": "22",
+                        "username": "guest",
+                        "password": "pass",
+                    },
                 },
-                "statusCode": None,
-                "expected": None,
-                "type": "BAD_REQUEST",
-            },
-            status=400,
-        )
-
-        connection_data = {
-            "protocol": "rdp",  # Missing 'name' field
-            "parameters": {"hostname": "192.168.1.100", "port": "3389"},
-        }
-
+                "10",
+                lambda api_responses, auth_data, connection_data: mock_post_connection_create_response(
+                    api_responses, auth_data, connection_data
+                ),
+            ),
+            (
+                {  # Missing 'name' field
+                    "protocol": "rdp",
+                    "parameters": {"hostname": "192.168.1.100", "port": "3389"},
+                },
+                None,
+                lambda api_responses, auth_data, connection_data: api_responses.post(
+                    f"{BASE_URL}/session/data/postgresql/connections",
+                    json={
+                        "message": "Connection names must not be blank.",
+                        "translatableMessage": {
+                            "key": "APP.TEXT_UNTRANSLATED",
+                            "variables": {
+                                "MESSAGE": "Connection names must not be blank."
+                            },
+                        },
+                        "statusCode": None,
+                        "expected": None,
+                        "type": "BAD_REQUEST",
+                    },
+                    status=400,
+                ),
+            ),
+        ],
+    )
+    def test_create_connection(
+        self,
+        authenticated_client,
+        api_responses,
+        auth_data,
+        connection_data,
+        expected_result,
+        mock_response,
+    ):
+        """Test creation of a connection with valid and invalid data."""
+        mock_response(api_responses, auth_data, connection_data)
         result = authenticated_client.create_connection(connection_data)
-
-        # Verify the result is None
-        assert result is None
+        assert result == expected_result
 
     def test_authentication_failure(self, bad_client):
         """Test behavior when called without prior authentication."""
@@ -177,9 +209,8 @@ class TestGuacamoleAPIClientCreateConnection:
 
     def test_server_error(self, authenticated_client, api_responses):
         """Test server error during creation."""
-        api_responses.post(
-            f"{BASE_URL}/session/data/postgresql/connections",
-            body=RequestException("Server error"),
+        mock_server_error(
+            api_responses, f"{BASE_URL}/session/data/postgresql/connections"
         )
 
         connection_data = {
@@ -197,36 +228,51 @@ class TestGuacamoleAPIClientCreateConnection:
 class TestGuacamoleAPIClientCreateConnectionGroup:
     """Tests for GuacamoleAPIClient.create_connection_group."""
 
-    def test_successful_creation(self, authenticated_client, api_responses, auth_data):
-        """Test successful creation of a connection group."""
-        mock_post_connection_group(api_responses, auth_data)
-        result = authenticated_client.create_connection_group("test-group-1")
-        # Verify the result
-        assert result == "20"
-
-    def test_invalid_input(self, authenticated_client, api_responses):
-        """Test creation with invalid input."""
-        api_responses.post(
-            f"{BASE_URL}/session/data/postgresql/connectionGroups",
-            json={
-                "message": "Connection group names must not be blank.",
-                "translatableMessage": {
-                    "key": "APP.TEXT_UNTRANSLATED",
-                    "variables": {
-                        "MESSAGE": "Connection group names must not be blank."
+    @pytest.mark.parametrize(
+        "group_name, expected_result, mock_response",
+        [
+            (
+                "test-group-1",
+                "20",
+                lambda api_responses, auth_data, group_name: mock_post_connection_group(
+                    api_responses, auth_data, group_name
+                ),
+            ),
+            (
+                None,
+                None,
+                lambda api_responses, auth_data, group_name: api_responses.post(
+                    f"{BASE_URL}/session/data/postgresql/connectionGroups",
+                    json={
+                        "message": "Connection group names must not be blank.",
+                        "translatableMessage": {
+                            "key": "APP.TEXT_UNTRANSLATED",
+                            "variables": {
+                                "MESSAGE": "Connection group names must not be blank."
+                            },
+                        },
+                        "statusCode": None,
+                        "expected": None,
+                        "type": "BAD_REQUEST",
                     },
-                },
-                "statusCode": None,
-                "expected": None,
-                "type": "BAD_REQUEST",
-            },
-            status=400,
-        )
-
-        result = authenticated_client.create_connection_group(None)
-
-        # Verify the result is None
-        assert result is None
+                    status=400,
+                ),
+            ),
+        ],
+    )
+    def test_create_connection_group(
+        self,
+        authenticated_client,
+        api_responses,
+        auth_data,
+        group_name,
+        expected_result,
+        mock_response,
+    ):
+        """Test creation of a connection group with valid and invalid input."""
+        mock_response(api_responses, auth_data, group_name)
+        result = authenticated_client.create_connection_group(group_name)
+        assert result == expected_result
 
     def test_authentication_failure(self, bad_client):
         """Test behavior when called without prior authentication."""
@@ -237,9 +283,8 @@ class TestGuacamoleAPIClientCreateConnectionGroup:
 
     def test_server_error(self, authenticated_client, api_responses):
         """Test server error during creation."""
-        api_responses.post(
-            f"{BASE_URL}/session/data/postgresql/connectionGroups",
-            body=RequestException("Server error"),
+        mock_server_error(
+            api_responses, f"{BASE_URL}/session/data/postgresql/connectionGroups"
         )
 
         result = authenticated_client.create_connection_group("Test Group")
