@@ -148,12 +148,17 @@ class GuacamoleAPIClient:
         Returns:
             ID of the created connection group if successful, None otherwise
         """
-        url = f"{self.base_url}/session/data/mysql/connectionGroups"
+        url = f"{self.base_url}/session/data/{self.data_source}/connectionGroups"
 
         group_data = {
+            "parentIdentifier": parent_id,
             "name": name,
             "type": "ORGANIZATIONAL",
-            "parentIdentifier": parent_id,
+            "attributes": {
+                "max-connections": "",
+                "max-connections-per-user": "",
+                "enable-session-affinity": "",
+            },
         }
 
         try:
@@ -163,7 +168,7 @@ class GuacamoleAPIClient:
             response.raise_for_status()
 
             # Extract group ID from response
-            group_id = response.text.strip('"')
+            group_id = response.json().get("identifier")
             logger.info(f"Created connection group '{name}' with ID {group_id}")
             return group_id
 
