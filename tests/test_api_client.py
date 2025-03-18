@@ -7,7 +7,7 @@ from requests.exceptions import RequestException
 from guacamole_csv_importer.api_client import GuacamoleAPIClient
 
 from responses import matchers
-import pytest_responses
+import pytest_responses  # noqa
 
 
 @pytest.fixture
