@@ -6,24 +6,47 @@ from requests.exceptions import RequestException
 
 from guacamole_csv_importer.api_client import GuacamoleAPIClient
 
+from responses import matchers
+import pytest_responses
+
 
 @pytest.fixture
 def client():
     """Fixture for creating a GuacamoleAPIClient instance."""
     return GuacamoleAPIClient(
         base_url="http://localhost:8080/guacamole/api",
-        username="admin",
-        password="password",
+        username="guacadmin",
+        password="guacadmin",
     )
+
+
+@pytest.fixture
+def bad_client():
+    """Fixture for creating a GuacamoleAPIClient instance."""
+    return GuacamoleAPIClient(
+        base_url="http://localhost:8080/guacamole/api",
+        username="admin",
+        password="guacadmin",
+    )
+
+
+MOCK_AUTH_USERNAME = "guacadmin"
+MOCK_AUTH_TOKEN = "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
+MOCK_AUTHENTICATED_RESPONSE = {
+    "authToken": MOCK_AUTH_TOKEN,
+    "username": MOCK_AUTH_USERNAME,
+    "dataSource": "postgresql",
+    "availableDataSources": ["postgresql", "postgresql-shared"],
+}
 
 
 @pytest.fixture
 def authenticated_client():
     """Fixture for creating an authenticated GuacamoleAPIClient instance."""
     with patch("requests.Session.post") as mock_post:
-        # Mock successful authentication response
+        # Mock successful authentication response using the format from tokens.json
         mock_response = Mock()
-        mock_response.json.return_value = {"authToken": "mock-token"}
+        mock_response.json.return_value = MOCK_AUTHENTICATED_RESPONSE
         mock_response.raise_for_status.return_value = None
         mock_post.return_value = mock_response
 
@@ -61,44 +84,58 @@ class TestGuacamoleAPIClientInit:
         assert client.base_url == "http://localhost:8080/guacamole/api"
 
 
+def mock_authenticated_response(responses):
+    responses.post(
+        "http://localhost:8080/guacamole/api/tokens",
+        json=MOCK_AUTHENTICATED_RESPONSE,
+        status=200,
+        match=[
+            matchers.urlencoded_params_matcher(
+                {"username": "guacadmin", "password": "guacadmin"}
+            )
+        ],
+    )
+
+    responses.post(
+        "http://localhost:8080/guacamole/api/tokens",
+        json={
+            "message": "Invalid login",
+            "translatableMessage": {
+                "key": "APP.TEXT_UNTRANSLATED",
+                "variables": {"MESSAGE": "Invalid login"},
+            },
+            "statusCode": None,
+            "expected": [
+                {"name": "username", "type": "USERNAME"},
+                {"name": "password", "type": "PASSWORD"},
+            ],
+            "type": "INVALID_CREDENTIALS",
+        },
+        status=403,
+        match=[
+            matchers.urlencoded_params_matcher(
+                {"username": "guacadmin", "password": "guacadmin"}
+            )
+        ],
+    )
+
+
 class TestGuacamoleAPIClientAuthenticate:
     """Tests for GuacamoleAPIClient.authenticate."""
 
-    def test_successful_authentication(self, client):
-        """Test successful authentication."""
-        with patch("requests.Session.post") as mock_post:
-            # Mock successful authentication response
-            mock_response = Mock()
-            mock_response.json.return_value = {"authToken": "mock-token"}
-            mock_response.raise_for_status.return_value = None
-            mock_post.return_value = mock_response
+    def test_successful_authentication(self, client, responses):
+        mock_authenticated_response(responses)
+        result = client.authenticate()
+        assert result is True
+        assert client.token == MOCK_AUTH_TOKEN
 
-            result = client.authenticate()
-
-            # Verify the request was made with correct parameters
-            mock_post.assert_called_once_with(
-                "http://localhost:8080/guacamole/api/tokens",
-                params={"username": "admin", "password": "password"},
-            )
-
-            # Verify the token was set and the method returned True
-            assert client.token == "mock-token"
-            assert result is True
-
-    def test_failed_authentication(self, client):
+    def test_failed_authentication(self, bad_client, responses):
         """Test failed authentication."""
-        with patch("requests.Session.post") as mock_post:
-            # Mock failed authentication response
-            mock_response = Mock()
-            mock_response.json.return_value = {"error": "Invalid credentials"}
-            mock_response.raise_for_status.return_value = None
-            mock_post.return_value = mock_response
-
-            result = client.authenticate()
-
-            # Verify the token remains None and the method returned False
-            assert client.token is None
-            assert result is False
+        mock_authenticated_response(responses)
+        result = bad_client.authenticate()
+        # Verify the token remains None and the method returned False
+        assert bad_client.token is None
+        assert result is False
 
     def test_server_error(self, client):
         """Test server error during authentication."""
@@ -119,7 +156,9 @@ class TestGuacamoleAPIClientGetAuthParams:
     def test_valid_token(self, authenticated_client):
         """Test _get_auth_params with a valid token."""
         auth_params = authenticated_client._get_auth_params()
-        assert auth_params == {"token": "mock-token"}
+        assert auth_params == {
+            "token": "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
+        }
 
     def test_not_authenticated(self, client):
         """Test _get_auth_params when not authenticated."""
@@ -149,7 +188,9 @@ class TestGuacamoleAPIClientGetConnectionGroups:
             # Verify the request was made with correct parameters
             mock_get.assert_called_once_with(
                 "http://localhost:8080/guacamole/api/session/data/mysql/connectionGroups",
-                params={"token": "mock-token"},
+                params={
+                    "token": "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
+                },
             )
 
             # Verify the result
@@ -197,7 +238,9 @@ class TestGuacamoleAPIClientCreateConnection:
             # Verify the request was made with correct parameters
             mock_post.assert_called_once_with(
                 "http://localhost:8080/guacamole/api/session/data/mysql/connections",
-                params={"token": "mock-token"},
+                params={
+                    "token": "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
+                },
                 json={
                     "name": "Test Connection",
                     "protocol": "rdp",
@@ -267,7 +310,9 @@ class TestGuacamoleAPIClientCreateConnectionGroup:
             # Verify the request was made with correct parameters
             mock_post.assert_called_once_with(
                 "http://localhost:8080/guacamole/api/session/data/mysql/connectionGroups",
-                params={"token": "mock-token"},
+                params={
+                    "token": "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0"
+                },
                 json={
                     "name": "Test Group",
                     "type": "ORGANIZATIONAL",

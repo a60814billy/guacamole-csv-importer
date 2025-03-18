@@ -39,7 +39,9 @@ class GuacamoleAPIClient:
 
         try:
             response = self.session.post(
-                auth_url, params={"username": self.username, "password": self.password}
+                auth_url,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data={"username": self.username, "password": self.password},
             )
             response.raise_for_status()
 
