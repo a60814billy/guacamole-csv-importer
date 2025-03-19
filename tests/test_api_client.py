@@ -13,6 +13,7 @@ from .conftest import (
     handle_request_exception,
     mock_authenticated_response,
     mock_get_connection_groups_response,
+    mock_get_connections_response,
     mock_post_connection_create_response,
     mock_post_connection_group,
     mock_server_error,
@@ -137,6 +138,45 @@ class TestGuacamoleAPIClientGetConnectionGroups:
 
         with pytest.raises(ValueError, match="API request failed: Server error"):
             authenticated_client.get_connection_groups()
+
+
+class TestGuacamoleAPIClientGetConnections:
+    """Tests for GuacamoleAPIClient.get_connections."""
+
+    def test_successful_retrieval(self, authenticated_client, api_responses, auth_data):
+        """Test successful retrieval of connection groups."""
+        mock_get_connections_response(api_responses, auth_data)
+
+        result = authenticated_client.get_connections()
+        print(result)
+        # Verify the result
+        connection_ids = result.keys()
+        assert len(connection_ids) == 2
+        assert list(connection_ids) == ["1", "2"]
+        assert result["1"]["name"] == "connection-1"
+        assert result["1"]["parentIdentifier"] == "ROOT"
+        assert result["1"]["protocol"] == "ssh"
+
+        assert result["2"]["name"] == "connection-2"
+        assert result["2"]["parentIdentifier"] == "ROOT"
+        assert result["2"]["protocol"] == "ssh"
+
+    def test_authentication_failure(self, bad_client, api_responses, auth_data):
+        """Test behavior when called without prior authentication."""
+        mock_get_connections_response(api_responses, auth_data)
+        with pytest.raises(
+            ValueError, match="Not authenticated. Call authenticate\\(\\) first."
+        ):
+            bad_client.get_connections()
+
+    def test_server_error(self, authenticated_client, api_responses):
+        """Test server error during retrieval."""
+        mock_server_error(
+            api_responses, f"{BASE_URL}/session/data/postgresql/connections"
+        )
+
+        with pytest.raises(ValueError, match="API request failed: Server error"):
+            authenticated_client.get_connections()
 
 
 class TestGuacamoleAPIClientCreateConnection:

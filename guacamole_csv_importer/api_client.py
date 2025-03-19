@@ -53,9 +53,6 @@ class GuacamoleAPIClient:
                 logger.info("Successfully authenticated with Guacamole API")
                 logger.debug(f"Data source: {self.data_source}")
                 return True
-            else:
-                logger.error("Authentication response did not contain auth token")
-                return False
 
         except RequestException as e:
             logger.error(f"Authentication failed: {e}")
@@ -89,6 +86,25 @@ class GuacamoleAPIClient:
             return response.json()
         except RequestException as e:
             logger.error(f"Failed to get connection groups: {e}")
+            raise ValueError(f"API request failed: {e}")
+
+    def get_connections(self) -> List[Dict[str, Any]]:
+        """Get all connections.
+
+        Returns:
+            List of connection dictionaries
+
+        Raises:
+            ValueError: If not authenticated or API request fails
+        """
+        url = f"{self.base_url}/session/data/{self.data_source}/connections"
+
+        try:
+            response = self.session.get(url, params=self._get_auth_params())
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            logger.error(f"Failed to get connections: {e}")
             raise ValueError(f"API request failed: {e}")
 
     def create_connection(

@@ -157,6 +157,66 @@ def mock_get_connection_groups_response(api_responses, auth_data):
     )
 
 
+def mock_get_connections_response(api_responses, auth_data):
+    api_responses.get(
+        f"{BASE_URL}/session/data/postgresql/connections",
+        json={
+            "1": {
+                "name": "connection-1",
+                "identifier": "1",
+                "parentIdentifier": "ROOT",
+                "protocol": "ssh",
+                "attributes": {
+                    "guacd-encryption": "none",
+                    "failover-only": None,
+                    "weight": None,
+                    "max-connections": None,
+                    "guacd-hostname": "guacd",
+                    "guacd-port": "4822",
+                    "max-connections-per-user": None,
+                },
+                "activeConnections": 0,
+                "lastActive": 0,
+            },
+            "2": {
+                "name": "connection-2",
+                "identifier": "2",
+                "parentIdentifier": "ROOT",
+                "protocol": "ssh",
+                "attributes": {
+                    "guacd-encryption": "none",
+                    "failover-only": None,
+                    "weight": None,
+                    "max-connections": None,
+                    "guacd-hostname": "guacd",
+                    "guacd-port": "4822",
+                    "max-connections-per-user": None,
+                },
+                "activeConnections": 0,
+                "lastActive": 0,
+            },
+        },
+        match=[
+            matchers.query_param_matcher({"token": auth_data["token"]}),
+        ],
+    )
+
+    api_responses.get(
+        f"{BASE_URL}/session/data/postgresql/connections",
+        json={
+            "message": "Permission Denied.",
+            "translatableMessage": {
+                "key": "APP.TEXT_UNTRANSLATED",
+                "variables": {"MESSAGE": "Permission Denied."},
+            },
+            "statusCode": None,
+            "expected": None,
+            "type": "PERMISSION_DENIED",
+        },
+        status=403,
+    )
+
+
 def mock_authenticated_response(api_responses, auth_data):
     api_responses.post(
         f"{BASE_URL}/tokens",
