@@ -176,7 +176,6 @@ def mock_get_connections_response(api_responses, auth_data):
                     "max-connections-per-user": None,
                 },
                 "activeConnections": 0,
-                "lastActive": 0,
             },
             "2": {
                 "name": "connection-2",
@@ -193,7 +192,6 @@ def mock_get_connections_response(api_responses, auth_data):
                     "max-connections-per-user": None,
                 },
                 "activeConnections": 0,
-                "lastActive": 0,
             },
         },
         match=[
