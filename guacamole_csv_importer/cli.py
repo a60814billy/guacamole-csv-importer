@@ -7,10 +7,14 @@ into Apache Guacamole.
 import argparse
 import logging
 import sys
+import os
 from pathlib import Path
 from typing import List, Optional
 
+from dotenv import load_dotenv
+
 from .importer import ConnectionImporter
+from .api_client import GuacamoleAPIClient
 from . import __version__
 
 
@@ -51,29 +55,22 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
 
     parser.add_argument(
         "--url",
-        "-u",
-        required=True,
+        required=False,
         help="Base URL of the Guacamole API (e.g., 'http://localhost:8080/guacamole/api')",
     )
 
     parser.add_argument(
         "--username",
-        "-n",
-        required=True,
+        "-u",
+        required=False,
         help="Guacamole admin username",
     )
 
     parser.add_argument(
         "--password",
         "-p",
-        required=True,
+        required=False,
         help="Guacamole admin password",
-    )
-
-    parser.add_argument(
-        "--parent-group",
-        "-g",
-        help="Name of the parent connection group to create",
     )
 
     parser.add_argument(
@@ -92,6 +89,20 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
+def build_api_client(parsed_args: argparse.Namespace) -> GuacamoleAPIClient:
+    """Build an API client from parsed arguments."""
+    url = parsed_args.url or os.getenv("GUACAMOLE_URL")
+    username = parsed_args.username or os.getenv("GUACAMOLE_USERNAME")
+    password = parsed_args.password or os.getenv("GUACAMOLE_PASSWORD")
+
+    if not url or not username or not password:
+        raise ValueError(
+            "You must provide Apache Guacamole API URL, username, and password via arguments or environment variables"
+        )
+
+    return GuacamoleAPIClient(url, username, password)
+
+
 def main(args: Optional[List[str]] = None) -> int:
     """Run the Guacamole CSV Importer.
 
@@ -101,6 +112,7 @@ def main(args: Optional[List[str]] = None) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
+    load_dotenv()
     parsed_args = parse_args(args)
     setup_logging(parsed_args.verbose)
 
@@ -113,17 +125,13 @@ def main(args: Optional[List[str]] = None) -> int:
             logger.error(f"CSV file not found: {parsed_args.csv_file}")
             return 1
 
+        guacamole_api_client = build_api_client(parsed_args)
+
         # Create importer
-        importer = ConnectionImporter(
-            api_url=parsed_args.url,
-            username=parsed_args.username,
-            password=parsed_args.password,
-            csv_file=parsed_args.csv_file,
-            parent_group=parsed_args.parent_group,
-        )
+        importer = ConnectionImporter(guacamole_api_client)
 
         # Import connections
-        successful, total = importer.import_connections()
+        successful, total = importer.import_connections(parsed_args.csv_file)
 
         # Report results
         if successful == total:

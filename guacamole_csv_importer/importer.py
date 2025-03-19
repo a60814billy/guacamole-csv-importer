@@ -18,28 +18,15 @@ logger = logging.getLogger(__name__)
 class ConnectionImporter:
     """Importer for Guacamole connections from CSV files."""
 
-    def __init__(
-        self,
-        api_url: str,
-        username: str,
-        password: str,
-        csv_file: Path,
-        parent_group: Optional[str] = None,
-    ):
+    def __init__(self, api_client: GuacamoleAPIClient):
         """Initialize the connection importer.
 
         Args:
-            api_url: Base URL of the Guacamole API
-            username: Guacamole admin username
-            password: Guacamole admin password
-            csv_file: Path to the CSV file containing connection data
-            parent_group: Name of the parent connection group to create (optional)
+            api_client: Guacamole API client
         """
-        self.api_client = GuacamoleAPIClient(api_url, username, password)
-        self.csv_parser = CSVParser(csv_file)
-        self.parent_group = parent_group
+        self.api_client = api_client
 
-    def import_connections(self) -> Tuple[int, int]:
+    def import_connections(self, csv_file_path: str) -> Tuple[int, int]:
         """Import connections from the CSV file into Guacamole.
 
         Returns:
@@ -48,6 +35,9 @@ class ConnectionImporter:
         Raises:
             ValueError: If authentication fails or CSV parsing fails
         """
+
+        self.csv_parser = CSVParser(csv_file_path)
+
         # Authenticate with the Guacamole API
         if not self.api_client.authenticate():
             raise ValueError("Failed to authenticate with Guacamole API")
