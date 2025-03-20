@@ -83,7 +83,13 @@ class GuacamoleAPIClient:
         try:
             response = self.session.get(url, params=self._get_auth_params())
             response.raise_for_status()
-            return response.json()
+            resp_json = response.json()
+
+            groups = []
+            for group in resp_json.keys():
+                    groups.append(resp_json[group])
+
+            return groups
         except RequestException as e:
             logger.error(f"Failed to get connection groups: {e}")
             raise ValueError(f"API request failed: {e}")
@@ -102,7 +108,11 @@ class GuacamoleAPIClient:
         try:
             response = self.session.get(url, params=self._get_auth_params())
             response.raise_for_status()
-            return response.json()
+            resp_json = response.json()
+            conns = []
+            for con in resp_json.keys():
+                conns.append(resp_json[con])
+            return conns
         except RequestException as e:
             logger.error(f"Failed to get connections: {e}")
             raise ValueError(f"API request failed: {e}")
