@@ -44,3 +44,15 @@ class ConnectionCsvData:
             "username": self.username,
             "password": self.password,
         }
+
+    def to_create_dict(self):
+        return {
+            "name": self.device_name,
+            "protocol": self.protocol,
+            "parameters": {
+                "hostname": self.hostname,
+                "port": self.port,
+                "username": self.username,
+                "password": self.password,
+            }
+        }

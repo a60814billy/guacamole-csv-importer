@@ -5,19 +5,12 @@ into Apache Guacamole.
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass
-import time
+from typing import Any, Dict, List, Tuple
 
-from .csv_parser import CSVParser
-from .connection_csv_data import ConnectionCsvData
 from .api_client import GuacamoleAPIClient
-from .connection_group_tree import (
-    ConnectionGroupTree,
-    ConnectionGroupNode,
-    ConnectionNode,
-)
+from .connection_csv_data import ConnectionCsvData
+from .connection_group_tree import (ConnectionGroupNode, ConnectionGroupTree)
+from .csv_parser import CSVParser
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +36,10 @@ class ConnectionImporter:
             ValueError: If authentication fails or CSV parsing fails
         """
 
-        self.csv_parser = CSVParser(csv_file_path)
+        csv_parser = CSVParser(csv_file_path)
+
+        successful_imports = 0
+        total_connections = 0
 
         # Authenticate with the Guacamole API
         if not self.api_client.authenticate():
@@ -57,12 +53,15 @@ class ConnectionImporter:
         tree = ConnectionGroupTree()
         tree.build_from_data(existing_connection_groups, existing_connections)
 
-        connections = self.csv_parser.parse()
+        connections = csv_parser.parse()
         connection_data: List[ConnectionCsvData] = []
         for connection in connections:
             conn_data = ConnectionCsvData.from_dict(connection)
+            if not conn_data.site.startswith("ROOT/"):
+                conn_data.site = "ROOT/" + conn_data.site
             connection_data.append(conn_data)
 
+        total_connections = len(connections)
         for connection in connection_data:
             parent_grp = tree.path_mapping.get(connection.site)
 
@@ -78,7 +77,7 @@ class ConnectionImporter:
                     grp = node.get_group_in_children(path_name)
                     if grp is None:
                         group_id = self.api_client.create_connection_group(
-                            name=path_name, parentIdentifier=node.identifier
+                            name=path_name, parent_id=node.identifier
                         )
                         # need to build the group
                         grp = node.add_group(
@@ -102,8 +101,9 @@ class ConnectionImporter:
             if conn is None:
                 # create connection in the group
                 conn_resp = self.api_client.create_connection(
-                    connection.to_dict(), parent_grp.identifier
+                    connection.to_create_dict(), parent_grp.identifier
                 )
+                successful_imports += 1
                 parent_grp.add_connection(
                     {
                         "name": connection.device_name,
@@ -123,37 +123,10 @@ class ConnectionImporter:
                 )
 
         tree.print_tree()
-        return
-        # Parse the CSV file
-        connections = self.csv_parser.parse()
-        total_connections = len(connections)
-
-        if total_connections == 0:
-            logger.warning("No connections found in CSV file")
-            return 0, 0
-
-        # Create parent group if specified
-        parent_id = "ROOT"
-        if self.parent_group:
-            parent_id = self.api_client.create_connection_group(self.parent_group)
-            if not parent_id:
-                logger.warning(
-                    f"Failed to create parent group '{self.parent_group}', using ROOT"
-                )
-                parent_id = "ROOT"
-
-        # Import connections
-        successful_imports = 0
-        for connection in connections:
-            if self._import_connection(connection, parent_id):
-                successful_imports += 1
-
-            # Small delay to avoid overwhelming the API
-            time.sleep(0.1)
-
         logger.info(
             f"Imported {successful_imports}/{total_connections} connections successfully"
         )
+
         return successful_imports, total_connections
 
     def _import_connection(self, connection: Dict[str, Any], parent_id: str) -> bool:
