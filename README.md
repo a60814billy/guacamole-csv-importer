@@ -1,37 +1,34 @@
-# Guacamole CSV Importer
+# Guacamole CSV Importer (gu-import)
 
 A Python package for importing connections from CSV files into Apache Guacamole.
 
 ## Features
 
 - Import connections from CSV files into Apache Guacamole
-- Create connection groups to organize connections
-- Validate CSV files before import
+- Create hierarchical connection groups automatically from CSV structure
 - Command-line interface for easy use
-- Detailed logging for troubleshooting
 
 ## Installation
 
-### From PyPI
+### Requirements
 
-```bash
-pip install guacamole-csv-importer
-```
+- Python 3.8 or higher
+- Apache Guacamole server
 
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/guacamole-csv-importer.git
-cd guacamole-csv-importer
-pip install -e .
+pip3 install git+https://github.com/a60814billy/guacamole-csv-importer.git@v0.1.1
 ```
 
 ## Usage
 
 ### Command-line Interface
 
+The package installs a command-line tool called `gu-import`:
+
 ```bash
-guacamole-csv-import connections.csv --url http://localhost:8080/guacamole/api --username admin --password password
+gu-import connections.csv --url http://localhost:8080/guacamole/api --username admin --password password
 ```
 
 #### Options
@@ -40,48 +37,32 @@ guacamole-csv-import connections.csv --url http://localhost:8080/guacamole/api -
 - `--url`, `-u`: Base URL of the Guacamole API
 - `--username`, `-n`: Guacamole admin username
 - `--password`, `-p`: Guacamole admin password
-- `--parent-group`, `-g`: Name of the parent connection group to create (optional)
-- `--verbose`, `-v`: Enable verbose logging
 - `--version`: Show version information
-
-### Python API
-
-```python
-from pathlib import Path
-from guacamole_csv_importer.importer import ConnectionImporter
-
-# Create importer
-importer = ConnectionImporter(
-    api_url="http://localhost:8080/guacamole/api",
-    username="admin",
-    password="password",
-    csv_file=Path("connections.csv"),
-    parent_group="Imported Connections"
-)
-
-# Import connections
-successful, total = importer.import_connections()
-print(f"Imported {successful}/{total} connections")
-```
 
 ## CSV File Format
 
 The CSV file should have the following columns:
 
-- `name`: Name of the connection
-- `protocol`: Protocol to use (e.g., `rdp`, `ssh`, `vnc`)
+- `site`: Hierarchical path for connection groups (e.g., "DC1/Rack1")
+- `device_name`: Name of the connection
 - `hostname`: Hostname or IP address of the target
+- `protocol`: Protocol to use (e.g., `ssh`, `telnet`, `vnc`, `rdp`)
 - `port`: Port number to connect to
+- `username`: Username for the connection
+- `password`: Password for the connection
 
-Additional columns will be added as connection parameters.
-
-Example:
+Example CSV (Check the `connections-example.csv` file):
 
 ```csv
-name,protocol,hostname,port,username,password,domain
-Server 1,rdp,192.168.1.100,3389,admin,password,example.com
-Server 2,ssh,192.168.1.101,22,user,password,
+site,device_name,hostname,protocol,port,username,password
+DC1/Rack1,sw-01,192.168.1.1,ssh,22,admin,admin
+DC1/Rack2,sw-02,192.168.1.2,ssh,22,admin,admin
 ```
+
+In this example:
+- Connections will be organized in a hierarchical structure (DC1 → Rack1 → sw-01)
+- Each row represents a connection with its authentication credentials
+- The `site` column determines the connection group structure
 
 ## Development
 
@@ -89,15 +70,11 @@ Server 2,ssh,192.168.1.101,22,user,password,
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/guacamole-csv-importer.git
+git clone https://github.com/a60814billy/guacamole-csv-importer.git
 cd guacamole-csv-importer
 
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
 # Install development dependencies
-pip install -e ".[dev]"
+pipenv install
 ```
 
 ### Running Tests

@@ -24,8 +24,20 @@ setup(
     url="https://github.com/a60814billy/guacamole-csv-importer",
     packages=find_packages(),
     include_package_data=True,
-    python_requires=">=3.12",
-    install_requires=["requests>=2.30.0", "dotenv>=0.9.0"],
+    python_requires=">=3.8",
+    install_requires=[
+        "requests==2.31.0",
+        "urllib3==2.2.0",
+        "dotenv",
+    ],
+    extras_require={
+        "dev": [
+            "pytest",
+            "responses",
+            "pytest-responses",
+            "exceptiongroup>=1.0.0rc8",
+        ],
+    },
     entry_points={
         "console_scripts": [
             "gu-import=guacamole_csv_importer.cli:main",
@@ -37,9 +49,12 @@ setup(
         "Intended Audience :: System Administrators",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
-        "Programming Language :: Python :: 3.14",
         "Topic :: System :: Systems Administration",
     ],
     keywords="guacamole, csv, import, remote desktop",
