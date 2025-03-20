@@ -4,7 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
+requests = "==2.31.0"
+urllib3 = "==2.2.0"
 dotenv = "*"
 
 [dev-packages]
