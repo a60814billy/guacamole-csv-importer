@@ -111,16 +111,15 @@ class TestGuacamoleAPIClientGetConnectionGroups:
         result = authenticated_client.get_connection_groups()
 
         # Verify the result
-        group_ids = result.keys()
-        assert len(group_ids) == 2
-        assert list(group_ids) == ["1", "2"]
-        assert result["1"]["name"] == "group-1"
-        assert result["1"]["type"] == "ORGANIZATIONAL"
-        assert result["1"]["parentIdentifier"] == "ROOT"
+        assert len(result) == 2
+        assert list([grp["identifier"] for grp in result]) == ["1", "2"]
+        assert result[0]["name"] == "group-1"
+        assert result[0]["type"] == "ORGANIZATIONAL"
+        assert result[0]["parentIdentifier"] == "ROOT"
 
-        assert result["2"]["name"] == "group-2"
-        assert result["2"]["type"] == "ORGANIZATIONAL"
-        assert result["2"]["parentIdentifier"] == "ROOT"
+        assert result[1]["name"] == "group-2"
+        assert result[1]["type"] == "ORGANIZATIONAL"
+        assert result[1]["parentIdentifier"] == "ROOT"
 
     def test_authentication_failure(self, bad_client, api_responses, auth_data):
         """Test behavior when called without prior authentication."""
@@ -148,18 +147,16 @@ class TestGuacamoleAPIClientGetConnections:
         mock_get_connections_response(api_responses, auth_data)
 
         result = authenticated_client.get_connections()
-        print(result)
         # Verify the result
-        connection_ids = result.keys()
-        assert len(connection_ids) == 2
-        assert list(connection_ids) == ["1", "2"]
-        assert result["1"]["name"] == "connection-1"
-        assert result["1"]["parentIdentifier"] == "ROOT"
-        assert result["1"]["protocol"] == "ssh"
+        assert len(result) == 2
+        assert list([con["identifier"] for con in result]) == ["1", "2"]
+        assert result[0]["name"] == "connection-1"
+        assert result[0]["parentIdentifier"] == "ROOT"
+        assert result[0]["protocol"] == "ssh"
 
-        assert result["2"]["name"] == "connection-2"
-        assert result["2"]["parentIdentifier"] == "ROOT"
-        assert result["2"]["protocol"] == "ssh"
+        assert result[1]["name"] == "connection-2"
+        assert result[1]["parentIdentifier"] == "ROOT"
+        assert result[1]["protocol"] == "ssh"
 
     def test_authentication_failure(self, bad_client, api_responses, auth_data):
         """Test behavior when called without prior authentication."""
