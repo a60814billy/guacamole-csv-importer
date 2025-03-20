@@ -25,12 +25,10 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     python_requires=">=3.12",
-    install_requires=[
-        "requests>=2.25.0",
-    ],
+    install_requires=["requests>=2.30.0", "dotenv>=0.9.0"],
     entry_points={
         "console_scripts": [
-            "guacamole-csv-import=guacamole_csv_importer.cli:main",
+            "gu-import=guacamole_csv_importer.cli:main",
         ],
     },
     classifiers=[
