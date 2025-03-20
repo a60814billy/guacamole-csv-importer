@@ -97,7 +97,8 @@ def build_api_client(parsed_args: argparse.Namespace) -> GuacamoleAPIClient:
 
     if not url or not username or not password:
         raise ValueError(
-            "You must provide Apache Guacamole API URL, username, and password via arguments or environment variables"
+            "You must provide Apache Guacamole API URL, username, "
+            "and password via arguments or environment variables"
         )
 
     return GuacamoleAPIClient(url, username, password)

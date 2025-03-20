@@ -4,7 +4,6 @@ This module provides a client for interacting with the Guacamole REST API.
 """
 
 import logging
-import json
 from typing import Dict, List, Any, Optional
 import requests
 from requests.exceptions import RequestException
@@ -87,8 +86,7 @@ class GuacamoleAPIClient:
 
             groups = []
             for group in resp_json.keys():
-                    groups.append(resp_json[group])
-
+                groups.append(resp_json[group])
             return groups
         except RequestException as e:
             logger.error(f"Failed to get connection groups: {e}")

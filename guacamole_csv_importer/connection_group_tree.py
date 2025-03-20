@@ -1,4 +1,4 @@
-from typing import TypedDict, List, Dict, Any
+from typing import List, Dict, Any
 from dataclasses import dataclass, field
 
 
@@ -86,7 +86,7 @@ class ConnectionGroupTree:
         current_path = group.name
         if postfix != "":
             current_path = f"{current_path}/{postfix}"
-        if group.parentIdentifier == None:
+        if group.parentIdentifier is None:
             return current_path
         return self.reverse_get_full_path_name(
             self.find_group(group.parentIdentifier), current_path

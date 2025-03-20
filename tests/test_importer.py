@@ -1,9 +1,8 @@
 import pytest
 
 import os
-import sys
 
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock
 
 from guacamole_csv_importer.importer import ConnectionImporter
 

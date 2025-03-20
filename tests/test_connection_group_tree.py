@@ -1,4 +1,3 @@
-import pytest
 from guacamole_csv_importer.connection_group_tree import ConnectionGroupTree
 
 
