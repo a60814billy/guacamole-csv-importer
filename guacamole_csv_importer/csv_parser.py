@@ -21,8 +21,17 @@ class CSVParser:
         Args:
             file_path: Path to the CSV file to parse
         """
-        self.file_path = file_path
-        self.required_fields = ["name", "protocol", "hostname", "port"]
+        self.file_path = Path(file_path)
+        # site,device_name,hostname,protocol,port,username,password
+        self.required_fields = [
+            "site",
+            "device_name",
+            "hostname",
+            "protocol",
+            "port",
+            "username",
+            "password",
+        ]
 
     def validate_headers(self, headers: List[str]) -> bool:
         """Validate that the CSV file contains the required headers.
@@ -100,12 +109,13 @@ class CSVParser:
 
         # Process the connection data
         connection = {
-            "name": row["name"],
+            "site": row["site"],
+            "device_name": row["device_name"],
             "protocol": row["protocol"],
-            "parameters": {
-                "hostname": row["hostname"],
-                "port": row["port"],
-            },
+            "hostname": row["hostname"],
+            "port": row["port"],
+            "username": row["username"],
+            "password": row["password"],
         }
 
         # Add optional parameters if present

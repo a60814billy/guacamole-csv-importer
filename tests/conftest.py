@@ -345,3 +345,170 @@ def mock_post_connection_group(api_responses, auth_data, group_name="test-group-
         },
         status=403,
     )
+
+
+@pytest.fixture
+def default_connection_group():
+    return [
+        {
+            "name": "c8k",
+            "identifier": "1",
+            "parentIdentifier": "ROOT",
+            "type": "ORGANIZATIONAL",
+            "activeConnections": 0,
+            "attributes": {
+                "max-connections": None,
+                "max-connections-per-user": None,
+                "enable-session-affinity": "",
+            },
+        },
+        {
+            "name": "n9k",
+            "identifier": "2",
+            "parentIdentifier": "ROOT",
+            "type": "ORGANIZATIONAL",
+            "activeConnections": 0,
+            "attributes": {
+                "max-connections": None,
+                "max-connections-per-user": None,
+                "enable-session-affinity": "",
+            },
+        },
+        {
+            "name": "xrv",
+            "identifier": "3",
+            "parentIdentifier": "ROOT",
+            "type": "ORGANIZATIONAL",
+            "activeConnections": 0,
+            "attributes": {
+                "max-connections": None,
+                "max-connections-per-user": None,
+                "enable-session-affinity": "",
+            },
+        },
+    ]
+
+
+@pytest.fixture
+def default_connections():
+    return [
+        {
+            "name": "lnx-1",
+            "identifier": "7",
+            "parentIdentifier": "ROOT",
+            "protocol": "ssh",
+            "attributes": {
+                "guacd-encryption": "none",
+                "failover-only": "true",
+                "weight": None,
+                "max-connections": "15",
+                "guacd-hostname": "guacd",
+                "guacd-port": "4822",
+                "max-connections-per-user": "1",
+            },
+            "activeConnections": 0,
+            "lastActive": 1742057190918,
+        },
+        {
+            "name": "c8k-1",
+            "identifier": "1",
+            "parentIdentifier": "1",
+            "protocol": "ssh",
+            "attributes": {
+                "guacd-encryption": "none",
+                "failover-only": "true",
+                "weight": None,
+                "max-connections": "15",
+                "guacd-hostname": "guacd",
+                "guacd-port": "4822",
+                "max-connections-per-user": "1",
+            },
+            "activeConnections": 0,
+            "lastActive": 1742057190918,
+        },
+        {
+            "name": "c8k-2",
+            "identifier": "2",
+            "parentIdentifier": "1",
+            "protocol": "ssh",
+            "attributes": {
+                "guacd-encryption": "none",
+                "failover-only": "true",
+                "weight": None,
+                "max-connections": "15",
+                "guacd-hostname": "guacd",
+                "guacd-port": "4822",
+                "max-connections-per-user": "1",
+            },
+            "activeConnections": 0,
+            "lastActive": 1742057190918,
+        },
+        {
+            "name": "n9k-1",
+            "identifier": "3",
+            "parentIdentifier": "2",
+            "protocol": "ssh",
+            "attributes": {
+                "guacd-encryption": "none",
+                "failover-only": "true",
+                "weight": None,
+                "max-connections": "15",
+                "guacd-hostname": "guacd",
+                "guacd-port": "4822",
+                "max-connections-per-user": "1",
+            },
+            "activeConnections": 0,
+            "lastActive": 1742057190918,
+        },
+        {
+            "name": "n9k-2",
+            "identifier": "4",
+            "parentIdentifier": "2",
+            "protocol": "ssh",
+            "attributes": {
+                "guacd-encryption": "none",
+                "failover-only": "true",
+                "weight": None,
+                "max-connections": "15",
+                "guacd-hostname": "guacd",
+                "guacd-port": "4822",
+                "max-connections-per-user": "1",
+            },
+            "activeConnections": 0,
+            "lastActive": 1742057190918,
+        },
+        {
+            "name": "xrv-1",
+            "identifier": "5",
+            "parentIdentifier": "3",
+            "protocol": "ssh",
+            "attributes": {
+                "guacd-encryption": "none",
+                "failover-only": "true",
+                "weight": None,
+                "max-connections": "15",
+                "guacd-hostname": "guacd",
+                "guacd-port": "4822",
+                "max-connections-per-user": "1",
+            },
+            "activeConnections": 0,
+            "lastActive": 1742057190918,
+        },
+        {
+            "name": "xrv-2",
+            "identifier": "6",
+            "parentIdentifier": "3",
+            "protocol": "ssh",
+            "attributes": {
+                "guacd-encryption": "none",
+                "failover-only": "true",
+                "weight": None,
+                "max-connections": "15",
+                "guacd-hostname": "guacd",
+                "guacd-port": "4822",
+                "max-connections-per-user": "1",
+            },
+            "activeConnections": 0,
+            "lastActive": 1742057190918,
+        },
+    ]

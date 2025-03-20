@@ -7,10 +7,17 @@ into Apache Guacamole.
 import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass
 import time
 
 from .csv_parser import CSVParser
+from .connection_csv_data import ConnectionCsvData
 from .api_client import GuacamoleAPIClient
+from .connection_group_tree import (
+    ConnectionGroupTree,
+    ConnectionGroupNode,
+    ConnectionNode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +49,81 @@ class ConnectionImporter:
         if not self.api_client.authenticate():
             raise ValueError("Failed to authenticate with Guacamole API")
 
+        existing_connection_groups = self.api_client.get_connection_groups()
+        logger.info(f"Existing connection groups: {existing_connection_groups}")
+        existing_connections = self.api_client.get_connections()
+        logger.info(f"Existing connections: {existing_connections}")
+
+        tree = ConnectionGroupTree()
+        tree.build_from_data(existing_connection_groups, existing_connections)
+
+        connections = self.csv_parser.parse()
+        connection_data: List[ConnectionCsvData] = []
+        for connection in connections:
+            conn_data = ConnectionCsvData.from_dict(connection)
+            connection_data.append(conn_data)
+
+        for connection in connection_data:
+            parent_grp = tree.path_mapping.get(connection.site)
+
+            if parent_grp is None:
+                # create the group
+                sep_path = connection.site.split("/")
+                if sep_path[0] != "ROOT":
+                    sep_path.insert(0, "ROOT")
+
+                node: ConnectionGroupNode = tree.path_mapping.get("ROOT")
+                for i in range(1, len(sep_path)):
+                    path_name = sep_path[i]
+                    grp = node.get_group_in_children(path_name)
+                    if grp is None:
+                        group_id = self.api_client.create_connection_group(
+                            name=path_name, parentIdentifier=node.identifier
+                        )
+                        # need to build the group
+                        grp = node.add_group(
+                            {
+                                "name": path_name,
+                                "identifier": group_id,
+                                "parentIdentifier": node.identifier,
+                                "type": "ORGANIZATIONAL",
+                                "activeConnections": 0,
+                                "attributes": {},
+                            }
+                        )
+                        # need refactor
+                        tree.path_mapping[tree.reverse_get_full_path_name(grp)] = grp
+                    node = grp
+
+                parent_grp = node
+
+            # check connection in the grp
+            conn = parent_grp.get_connection_in_children(connection.device_name)
+            if conn is None:
+                # create connection in the group
+                conn_resp = self.api_client.create_connection(
+                    connection.to_dict(), parent_grp.identifier
+                )
+                parent_grp.add_connection(
+                    {
+                        "name": connection.device_name,
+                        "identifier": conn_resp,
+                        "parentIdentifier": parent_grp.identifier,
+                        "protocol": connection.protocol,
+                        "attributes": {
+                            "guacd-encryption": "none",
+                            "failover-only": "true",
+                            "weight": None,
+                            "max-connections": "15",
+                            "guacd-hostname": "guacd",
+                            "guacd-port": "4822",
+                            "max-connections-per-user": "1",
+                        },
+                    }
+                )
+
+        tree.print_tree()
+        return
         # Parse the CSV file
         connections = self.csv_parser.parse()
         total_connections = len(connections)
