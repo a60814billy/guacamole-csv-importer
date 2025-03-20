@@ -100,7 +100,7 @@ class ConnectionGroupTree:
             group = tmp_groups.pop(0)
             parent_id = group["parentIdentifier"]
             parent_obj = self.find_group(parent_id)
-            if parent_id is not None:
+            if parent_obj is not None:
                 grp = ConnectionGroupNode(
                     name=group["name"],
                     identifier=group["identifier"],
