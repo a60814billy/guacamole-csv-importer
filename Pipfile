@@ -11,6 +11,7 @@ dotenv = "*"
 pytest = "*"
 responses = "*"
 pytest-responses = "*"
+exceptiongroup = ">=1.0.0rc8"
 
 [requires]
 python_version = "3"
