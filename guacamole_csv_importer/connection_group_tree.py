@@ -32,6 +32,7 @@ class ConnectionGroupTree:
     def __init__(self):
         """Initialize an empty connection group tree with a ROOT node."""
         self.group_tree_root = ConnectionGroup(name="ROOT", identifier="ROOT")
+        self.path_mapping: Dict[str, ConnectionGroup] = {"ROOT": self.group_tree_root}
 
     def find_group(self, group_id: str):
         stack = [self.group_tree_root]
@@ -44,6 +45,16 @@ class ConnectionGroupTree:
 
         return None
 
+    def reverse_get_full_path_name(self, group: ConnectionGroup, postfix: str = ""):
+        current_path = group.name
+        if postfix != "":
+            current_path = f"{current_path}/{postfix}"
+        if group.parentIdentifier == None:
+            return current_path
+        return self.reverse_get_full_path_name(
+            self.find_group(group.parentIdentifier), current_path
+        )
+
     def build_from_data(
         self, connection_groups: List[Dict[str, Any]], connections: List[Dict[str, Any]]
     ):
@@ -53,16 +64,16 @@ class ConnectionGroupTree:
             parent_id = group["parentIdentifier"]
             parent_obj = self.find_group(parent_id)
             if parent_id is not None:
-                parent_obj.childrens.append(
-                    ConnectionGroup(
-                        name=group["name"],
-                        identifier=group["identifier"],
-                        parentIdentifier=group["parentIdentifier"],
-                        type=group["type"],
-                        activeConnections=group["activeConnections"],
-                        attributes=group["attributes"],
-                    )
+                grp = ConnectionGroup(
+                    name=group["name"],
+                    identifier=group["identifier"],
+                    parentIdentifier=group["parentIdentifier"],
+                    type=group["type"],
+                    activeConnections=group["activeConnections"],
+                    attributes=group["attributes"],
                 )
+                parent_obj.childrens.append(grp)
+                self.path_mapping[self.reverse_get_full_path_name(grp)] = grp
             else:
                 tmp_groups.append(group)
 
