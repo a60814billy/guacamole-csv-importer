@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class CSVParser:
     """Parser for CSV files containing Guacamole connection information."""
 
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: str):
         """Initialize the CSV parser.
 
         Args:
