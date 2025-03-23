@@ -1,7 +1,12 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "guacamole-csv-importer"
-version = "0.1.1"
+dynamic = ["version"]
 description = "A Python package for importing connections from CSV files into Apache Guacamole."
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
@@ -47,8 +52,11 @@ Issues = "https://github.com/a60814billy/guacamole-csv-importer/issues"
 [project.scripts]
 gu-import = "guacamole_csv_importer.cli:main"
 
-[tool.uv]
-package = true
+[tool.hatch.version]
+path = "src/guacamole_csv_importer/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/tests"]
 
 [tool.isort]
 profile = "black"
