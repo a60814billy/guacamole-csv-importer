@@ -47,21 +47,21 @@ class TestGuacamoleAPIClientAuthenticate:
         "client_fixture, expected_result, expected_token",
         [
             (
-                    "client",
-                    True,
-                    "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0",
+                "client",
+                True,
+                "374C043A320CE19FF4CA0164259B9F4900EFD43F3CC58F73C1EDAC647041F5D0",
             ),
             ("bad_client", False, None),
         ],
     )
     def test_authentication(
-            self,
-            client_fixture,
-            expected_result,
-            expected_token,
-            request,
-            api_responses,
-            auth_data,
+        self,
+        client_fixture,
+        expected_result,
+        expected_token,
+        request,
+        api_responses,
+        auth_data,
     ):
         mock_authenticated_response(api_responses, auth_data)
         client = request.getfixturevalue(client_fixture)
@@ -91,7 +91,7 @@ class TestGuacamoleAPIClientGetAuthParams:
     def test_not_authenticated(self, client):
         """Test _get_auth_params when not authenticated."""
         with pytest.raises(
-                ValueError, match="Not authenticated. Call authenticate\\(\\) first."
+            ValueError, match="Not authenticated. Call authenticate\\(\\) first."
         ):
             client._get_auth_params()
 
@@ -120,7 +120,7 @@ class TestGuacamoleAPIClientGetConnectionGroups:
         """Test behavior when called without prior authentication."""
         mock_get_connection_groups_response(api_responses, auth_data)
         with pytest.raises(
-                ValueError, match="Not authenticated. Call authenticate\\(\\) first."
+            ValueError, match="Not authenticated. Call authenticate\\(\\) first."
         ):
             bad_client.get_connection_groups()
 
@@ -157,7 +157,7 @@ class TestGuacamoleAPIClientGetConnections:
         """Test behavior when called without prior authentication."""
         mock_get_connections_response(api_responses, auth_data)
         with pytest.raises(
-                ValueError, match="Not authenticated. Call authenticate\\(\\) first."
+            ValueError, match="Not authenticated. Call authenticate\\(\\) first."
         ):
             bad_client.get_connections()
 
@@ -178,55 +178,56 @@ class TestGuacamoleAPIClientCreateConnection:
         "connection_data, expected_result, mock_response",
         [
             (
-                    {  # Valid connection data
-                        "name": "Test Connection",
-                        "protocol": "ssh",
-                        "parameters": {
-                            "hostname": "localhost",
-                            "port": "22",
-                            "username": "guest",
-                            "password": "pass",
-                        },
+                {  # Valid connection data
+                    "name": "Test Connection",
+                    "protocol": "ssh",
+                    "parameters": {
+                        "hostname": "localhost",
+                        "port": "22",
+                        "username": "guest",
+                        "password": "pass",
                     },
-                    "10",
-                    lambda api_responses, auth_data,
-                    connection_data: mock_post_connection_create_response(
-                        api_responses, auth_data, connection_data
-                    ),
+                },
+                "10",
+                lambda api_responses,
+                auth_data,
+                connection_data: mock_post_connection_create_response(
+                    api_responses, auth_data, connection_data
+                ),
             ),
             (
-                    {  # Missing 'name' field
-                        "protocol": "rdp",
-                        "parameters": {"hostname": "192.168.1.100", "port": "3389"},
-                    },
-                    None,
-                    lambda api_responses, auth_data, connection_data: api_responses.post(
-                        f"{BASE_URL}/session/data/postgresql/connections",
-                        json={
-                            "message": "Connection names must not be blank.",
-                            "translatableMessage": {
-                                "key": "APP.TEXT_UNTRANSLATED",
-                                "variables": {
-                                    "MESSAGE": "Connection names must not be blank."
-                                },
+                {  # Missing 'name' field
+                    "protocol": "rdp",
+                    "parameters": {"hostname": "192.168.1.100", "port": "3389"},
+                },
+                None,
+                lambda api_responses, auth_data, connection_data: api_responses.post(
+                    f"{BASE_URL}/session/data/postgresql/connections",
+                    json={
+                        "message": "Connection names must not be blank.",
+                        "translatableMessage": {
+                            "key": "APP.TEXT_UNTRANSLATED",
+                            "variables": {
+                                "MESSAGE": "Connection names must not be blank."
                             },
-                            "statusCode": None,
-                            "expected": None,
-                            "type": "BAD_REQUEST",
                         },
-                        status=400,
-                    ),
+                        "statusCode": None,
+                        "expected": None,
+                        "type": "BAD_REQUEST",
+                    },
+                    status=400,
+                ),
             ),
         ],
     )
     def test_create_connection(
-            self,
-            authenticated_client,
-            api_responses,
-            auth_data,
-            connection_data,
-            expected_result,
-            mock_response,
+        self,
+        authenticated_client,
+        api_responses,
+        auth_data,
+        connection_data,
+        expected_result,
+        mock_response,
     ):
         """Test creation of a connection with valid and invalid data."""
         mock_response(api_responses, auth_data, connection_data)
@@ -236,7 +237,7 @@ class TestGuacamoleAPIClientCreateConnection:
     def test_authentication_failure(self, bad_client):
         """Test behavior when called without prior authentication."""
         with pytest.raises(
-                ValueError, match="Not authenticated. Call authenticate\\(\\) first."
+            ValueError, match="Not authenticated. Call authenticate\\(\\) first."
         ):
             bad_client.create_connection({"name": "Test"})
 
@@ -265,42 +266,42 @@ class TestGuacamoleAPIClientCreateConnectionGroup:
         "group_name, expected_result, mock_response",
         [
             (
-                    "test-group-1",
-                    "20",
-                    lambda api_responses, auth_data, group_name: mock_post_connection_group(
-                        api_responses, auth_data, group_name
-                    ),
+                "test-group-1",
+                "20",
+                lambda api_responses, auth_data, group_name: mock_post_connection_group(
+                    api_responses, auth_data, group_name
+                ),
             ),
             (
-                    None,
-                    None,
-                    lambda api_responses, auth_data, group_name: api_responses.post(
-                        f"{BASE_URL}/session/data/postgresql/connectionGroups",
-                        json={
-                            "message": "Connection group names must not be blank.",
-                            "translatableMessage": {
-                                "key": "APP.TEXT_UNTRANSLATED",
-                                "variables": {
-                                    "MESSAGE": "Connection group names must not be blank."
-                                },
+                None,
+                None,
+                lambda api_responses, auth_data, group_name: api_responses.post(
+                    f"{BASE_URL}/session/data/postgresql/connectionGroups",
+                    json={
+                        "message": "Connection group names must not be blank.",
+                        "translatableMessage": {
+                            "key": "APP.TEXT_UNTRANSLATED",
+                            "variables": {
+                                "MESSAGE": "Connection group names must not be blank."
                             },
-                            "statusCode": None,
-                            "expected": None,
-                            "type": "BAD_REQUEST",
                         },
-                        status=400,
-                    ),
+                        "statusCode": None,
+                        "expected": None,
+                        "type": "BAD_REQUEST",
+                    },
+                    status=400,
+                ),
             ),
         ],
     )
     def test_create_connection_group(
-            self,
-            authenticated_client,
-            api_responses,
-            auth_data,
-            group_name,
-            expected_result,
-            mock_response,
+        self,
+        authenticated_client,
+        api_responses,
+        auth_data,
+        group_name,
+        expected_result,
+        mock_response,
     ):
         """Test creation of a connection group with valid and invalid input."""
         mock_response(api_responses, auth_data, group_name)
@@ -310,7 +311,7 @@ class TestGuacamoleAPIClientCreateConnectionGroup:
     def test_authentication_failure(self, bad_client):
         """Test behavior when called without prior authentication."""
         with pytest.raises(
-                ValueError, match="Not authenticated. Call authenticate\\(\\) first."
+            ValueError, match="Not authenticated. Call authenticate\\(\\) first."
         ):
             bad_client.create_connection_group("Test Group")
 

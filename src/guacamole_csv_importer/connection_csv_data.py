@@ -54,5 +54,5 @@ class ConnectionCsvData:
                 "port": self.port,
                 "username": self.username,
                 "password": self.password,
-            }
+            },
         }
