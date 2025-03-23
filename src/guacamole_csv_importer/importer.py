@@ -62,16 +62,16 @@ class ConnectionImporter:
             connection_data.append(conn_data)
 
         total_connections = len(connections)
-        for connection in connection_data:
-            parent_grp = tree.path_mapping.get(connection.site)
+        for _conn in connection_data:
+            parent_grp = tree.path_mapping.get(_conn.site)
 
             if parent_grp is None:
                 # create the group
-                sep_path = connection.site.split("/")
+                sep_path = _conn.site.split("/")
                 if sep_path[0] != "ROOT":
                     sep_path.insert(0, "ROOT")
 
-                node: ConnectionGroupNode = tree.path_mapping.get("ROOT")
+                node: ConnectionGroupNode = tree.path_mapping["ROOT"]
                 for i in range(1, len(sep_path)):
                     path_name = sep_path[i]
                     grp = node.get_group_in_children(path_name)
@@ -97,19 +97,19 @@ class ConnectionImporter:
                 parent_grp = node
 
             # check connection in the grp
-            conn = parent_grp.get_connection_in_children(connection.device_name)
+            conn = parent_grp.get_connection_in_children(_conn.device_name)
             if conn is None:
                 # create connection in the group
                 conn_resp = self.api_client.create_connection(
-                    connection.to_create_dict(), parent_grp.identifier
+                    _conn.to_create_dict(), parent_grp.identifier
                 )
                 successful_imports += 1
                 parent_grp.add_connection(
                     {
-                        "name": connection.device_name,
+                        "name": _conn.device_name,
                         "identifier": conn_resp,
                         "parentIdentifier": parent_grp.identifier,
-                        "protocol": connection.protocol,
+                        "protocol": _conn.protocol,
                         "attributes": {
                             "guacd-encryption": "none",
                             "failover-only": "true",

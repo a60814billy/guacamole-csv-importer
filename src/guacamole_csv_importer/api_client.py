@@ -56,7 +56,8 @@ class GuacamoleAPIClient:
 
         except RequestException as e:
             logger.error(f"Authentication failed: {e}")
-            return False
+
+        return False
 
     def _get_auth_params(self) -> Dict[str, str]:
         """Get authentication parameters for API requests.

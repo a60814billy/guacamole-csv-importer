@@ -39,12 +39,6 @@ dependencies = [
     "urllib3>=2.2.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3.5",
-    "pytest-responses>=0.5.1",
-]
-
 [project.urls]
 Repository = "https://github.com/a60814billy/guacamole-csv-importer.git"
 Issues = "https://github.com/a60814billy/guacamole-csv-importer/issues"
@@ -63,4 +57,16 @@ profile = "black"
 src_paths = [
     "src",
     "tests"
+]
+
+[dependency-groups]
+typing = [
+    "types-requests"
+]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-responses>=0.5.1",
+    "isort>=5.13.2",
+    "mypy>=1.14.1",
+    "ruff>=0.11.2",
 ]

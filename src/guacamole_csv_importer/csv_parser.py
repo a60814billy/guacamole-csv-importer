@@ -70,7 +70,9 @@ class CSVParser:
                 reader = csv.DictReader(csvfile)
 
                 # Validate headers
-                if not self.validate_headers(reader.fieldnames or []):
+                if reader.fieldnames is None:
+                    raise ValueError("Invalid CSV file")
+                if not self.validate_headers(list(reader.fieldnames)):
                     raise ValueError("Invalid CSV headers")
 
                 # Parse connections
@@ -108,7 +110,7 @@ class CSVParser:
                 raise ValueError(f"Missing required field: {field}")
 
         # Process the connection data
-        connection = {
+        connection: Dict[str, Any] = {
             "site": row["site"],
             "device_name": row["device_name"],
             "protocol": row["protocol"],

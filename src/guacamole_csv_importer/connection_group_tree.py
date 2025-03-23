@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class ConnectionGroupNode:
     name: str
     identifier: str
-    parentIdentifier: str = None
+    parentIdentifier: Optional[str] = None
     type: str = "ORGANIZATIONAL"
     activeConnections: int = 0
     attributes: dict = field(default_factory=dict)
@@ -64,12 +64,13 @@ class ConnectionGroupTree:
     This class is decoupled from any API or external system.
     """
 
-    def __init__(self):
+    group_tree_root: ConnectionGroupNode
+    path_mapping: Dict[str, ConnectionGroupNode] = field(default_factory=dict)
+
+    def __init__(self) -> None:
         """Initialize an empty connection group tree with a ROOT node."""
         self.group_tree_root = ConnectionGroupNode(name="ROOT", identifier="ROOT")
-        self.path_mapping: Dict[str, ConnectionGroupNode] = {
-            "ROOT": self.group_tree_root
-        }
+        self.path_mapping = {"ROOT": self.group_tree_root}
 
     def find_group(self, group_id: str):
         stack = [self.group_tree_root]

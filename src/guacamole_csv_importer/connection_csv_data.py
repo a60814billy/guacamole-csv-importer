@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Dict
 
 
 @dataclass
@@ -23,15 +23,15 @@ class ConnectionCsvData:
     password: str
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ConnectionCsvData":
+    def from_dict(cls, data: Dict[str, str]) -> "ConnectionCsvData":
         return cls(
-            site=data.get("site"),
-            device_name=data.get("device_name"),
-            hostname=data.get("hostname"),
-            protocol=data.get("protocol"),
-            port=data.get("port"),
-            username=data.get("username"),
-            password=data.get("password"),
+            site=data["site"],
+            device_name=data["device_name"],
+            hostname=data["hostname"],
+            protocol=data["protocol"],
+            port=data["port"],
+            username=data["username"],
+            password=data["password"],
         )
 
     def to_dict(self):
