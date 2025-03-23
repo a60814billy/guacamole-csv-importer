@@ -9,9 +9,7 @@ description = "A Python package for importing connections from CSV files into Ap
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.8"
-authors = [
-    { "name" = "BoHong Li", email = "a60814billy@gmail.com" }
-]
+authors = [{ "name" = "BoHong Li", email = "a60814billy@gmail.com" }]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -26,18 +24,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: System :: Systems Administration",
 ]
-keywords = [
-    "guacamole",
-    "csv",
-    "import",
-    "remote desktop"
-]
+keywords = ["guacamole", "csv", "import", "remote desktop"]
 
-dependencies = [
-    "python-dotenv>=1.0.1",
-    "requests>=2.31.0",
-    "urllib3>=2.2.0",
-]
+dependencies = ["python-dotenv>=1.0.1", "requests>=2.31.0", "urllib3>=2.2.0"]
 
 [project.urls]
 Repository = "https://github.com/a60814billy/guacamole-csv-importer.git"
@@ -54,19 +43,14 @@ exclude = ["/tests"]
 
 [tool.isort]
 profile = "black"
-src_paths = [
-    "src",
-    "tests"
-]
+src_paths = ["src", "tests"]
 
 [dependency-groups]
-typing = [
-    "types-requests"
-]
 dev = [
     "pytest>=8.3.5",
     "pytest-responses>=0.5.1",
     "mypy>=1.14.1",
     "ruff>=0.11.2",
     "pytest-cov>=5.0.0",
+    "types-requests>=2.32.0.20241016",
 ]
