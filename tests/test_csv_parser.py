@@ -1,7 +1,9 @@
 """Tests for the CSV parser module."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from guacamole_csv_importer.csv_parser import CSVParser
 
 

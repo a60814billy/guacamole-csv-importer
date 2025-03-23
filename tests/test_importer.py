@@ -1,8 +1,7 @@
-import pytest
-
 import os
-
 from unittest.mock import MagicMock
+
+import pytest
 
 from guacamole_csv_importer.importer import ConnectionImporter
 

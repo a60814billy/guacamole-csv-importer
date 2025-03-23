@@ -2,6 +2,7 @@ import pytest
 import pytest_responses  # noqa
 
 from guacamole_csv_importer.api_client import GuacamoleAPIClient
+
 # Import from conftest.py
 from .conftest import (
     BASE_URL,

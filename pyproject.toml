@@ -49,3 +49,10 @@ gu-import = "guacamole_csv_importer.cli:main"
 
 [tool.uv]
 package = true
+
+[tool.isort]
+profile = "black"
+src_paths = [
+    "src",
+    "tests"
+]

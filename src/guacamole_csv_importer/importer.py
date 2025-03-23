@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Tuple
 
 from .api_client import GuacamoleAPIClient
 from .connection_csv_data import ConnectionCsvData
-from .connection_group_tree import (ConnectionGroupNode, ConnectionGroupTree)
+from .connection_group_tree import ConnectionGroupNode, ConnectionGroupTree
 from .csv_parser import CSVParser
 
 logger = logging.getLogger(__name__)

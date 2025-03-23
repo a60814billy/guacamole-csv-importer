@@ -1,8 +1,8 @@
 """Test fixtures for Guacamole API client tests."""
 
 import pytest
-from requests.exceptions import RequestException
 import responses
+from requests.exceptions import RequestException
 from responses import matchers
 
 # Configuration constants

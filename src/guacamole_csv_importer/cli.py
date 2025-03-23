@@ -6,16 +6,16 @@ into Apache Guacamole.
 
 import argparse
 import logging
-import sys
 import os
+import sys
 from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
 
-from .importer import ConnectionImporter
-from .api_client import GuacamoleAPIClient
 from . import __version__
+from .api_client import GuacamoleAPIClient
+from .importer import ConnectionImporter
 
 
 def setup_logging(verbose: bool = False) -> None:

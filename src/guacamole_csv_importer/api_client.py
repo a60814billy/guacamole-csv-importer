@@ -4,7 +4,8 @@ This module provides a client for interacting with the Guacamole REST API.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import requests
 from requests.exceptions import RequestException
 
@@ -116,7 +117,7 @@ class GuacamoleAPIClient:
             raise ValueError(f"API request failed: {e}")
 
     def create_connection(
-        self, connection_data: Dict[str, Any], parent_id: str = "ROOT"
+            self, connection_data: Dict[str, Any], parent_id: str = "ROOT"
     ) -> Optional[str]:
         """Create a new connection.
 
@@ -161,7 +162,7 @@ class GuacamoleAPIClient:
             return None
 
     def create_connection_group(
-        self, name: str, parent_id: str = "ROOT"
+            self, name: str, parent_id: str = "ROOT"
     ) -> Optional[str]:
         """Create a new connection group.
 
