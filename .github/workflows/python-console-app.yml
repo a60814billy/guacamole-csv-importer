@@ -1,35 +1,27 @@
 name: Guacamole CSV Importer CI
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: [ "3.8", "3.9", "3.10", "3.11", "3.12", "3.13" ]
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv and setup the python version
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install pipenv
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install pipenv
-
+          enable-cache: true
       - name: Install dependencies
-        run: |
-          pipenv install --dev
-
+        run: uv sync --all-extras --dev
       - name: Lint with flake8
         run: |
           pip install flake8
-          flake8 guacamole_csv_importer tests
-
+          flake8 src tests
       - name: Run tests
         run: |
-          pipenv run pytest -v
+          uv run pytest -v
