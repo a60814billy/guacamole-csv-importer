@@ -26,6 +26,10 @@ class Config:
             "username": os.environ.get("GUACAMOLE_USERNAME", ""),
             "password": os.environ.get("GUACAMOLE_PASSWORD", ""),
             "parent_group": os.environ.get("GUACAMOLE_PARENT_GROUP", ""),
+            # Add guacd configuration with defaults
+            "guacd_host": os.environ.get("GUACD_HOST", "localhost"),
+            "guacd_port": int(os.environ.get("GUACD_PORT", "4822")),
+            "guacd_encryption": os.environ.get("GUACD_ENCRYPTION", "none"),
         }
 
         # Load configuration from file if provided

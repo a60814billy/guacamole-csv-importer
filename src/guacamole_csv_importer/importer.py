@@ -5,9 +5,10 @@ into Apache Guacamole.
 """
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .api_client import GuacamoleAPIClient
+from .config import Config
 from .connection_csv_data import ConnectionCsvData
 from .connection_group_tree import ConnectionGroupNode, ConnectionGroupTree
 from .csv_parser import CSVParser
@@ -18,13 +19,15 @@ logger = logging.getLogger(__name__)
 class ConnectionImporter:
     """Importer for Guacamole connections from CSV files."""
 
-    def __init__(self, api_client: GuacamoleAPIClient):
+    def __init__(self, api_client: GuacamoleAPIClient, config: Optional[Config] = None):
         """Initialize the connection importer.
 
         Args:
             api_client: Guacamole API client
+            config: Configuration object (optional)
         """
         self.api_client = api_client
+        self.config = config or Config()
 
     def import_connections(self, csv_file_path: str) -> Tuple[int, int]:
         """Import connections from the CSV file into Guacamole.
@@ -111,12 +114,12 @@ class ConnectionImporter:
                         "parentIdentifier": parent_grp.identifier,
                         "protocol": _conn.protocol,
                         "attributes": {
-                            "guacd-encryption": "none",
+                            "guacd-encryption": self.config.get("guacd_encryption", "none"),
                             "failover-only": "true",
                             "weight": None,
                             "max-connections": "15",
-                            "guacd-hostname": "guacd",
-                            "guacd-port": "4822",
+                            "guacd-hostname": self.config.get("guacd_host", "localhost"),
+                            "guacd-port": str(self.config.get("guacd_port", 4822)),
                             "max-connections-per-user": "1",
                         },
                     }
