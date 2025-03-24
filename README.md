@@ -31,13 +31,29 @@ The package installs a command-line tool called `gu-import`:
 gu-import connections.csv --url http://localhost:8080/guacamole/api --username admin --password password
 ```
 
+You can also specify guacd configuration options:
+
+```bash
+gu-import connections.csv --url http://localhost:8080/guacamole/api --username admin --password password \
+  --guacd-host guacd.example.com --guacd-port 4822 --guacd-encryption ssl
+```
+
 #### Options
 
 - `csv_file`: Path to the CSV file containing connection data
-- `--url`, `-u`: Base URL of the Guacamole API
-- `--username`, `-n`: Guacamole admin username
+- `--url`: Base URL of the Guacamole API
+- `--username`, `-u`: Guacamole admin username
 - `--password`, `-p`: Guacamole admin password
+- `--guacd-host`: Hostname or IP address of the guacd server (default: localhost)
+- `--guacd-port`: Port on which guacd is listening (default: 4822)
+- `--guacd-encryption`: Encryption method to use for guacd connection (choices: none, ssl, default: none)
+- `--verbose`, `-v`: Enable verbose logging
 - `--version`: Show version information
+
+You can also set these options using environment variables:
+- `GUACD_HOST`: Hostname or IP address of the guacd server
+- `GUACD_PORT`: Port on which guacd is listening
+- `GUACD_ENCRYPTION`: Encryption method to use for guacd connection
 
 ## CSV File Format
 

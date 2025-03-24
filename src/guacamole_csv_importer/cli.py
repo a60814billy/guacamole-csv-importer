@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 
 from . import __version__
 from .api_client import GuacamoleAPIClient
+from .config import Config
 from .importer import ConnectionImporter
 
 
@@ -73,6 +74,30 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
         help="Guacamole admin password",
     )
 
+    # Add guacd configuration arguments
+    parser.add_argument(
+        "--guacd-host",
+        required=False,
+        default="localhost",
+        help="Hostname or IP address of the guacd server (default: localhost)",
+    )
+
+    parser.add_argument(
+        "--guacd-port",
+        required=False,
+        type=int,
+        default=4822,
+        help="Port on which guacd is listening (default: 4822)",
+    )
+
+    parser.add_argument(
+        "--guacd-encryption",
+        required=False,
+        choices=["none", "ssl"],
+        default="none",
+        help="Encryption method to use for guacd connection (default: none)",
+    )
+
     parser.add_argument(
         "--verbose",
         "-v",
@@ -128,8 +153,14 @@ def main(args: Optional[List[str]] = None) -> int:
 
         guacamole_api_client = build_api_client(parsed_args)
 
-        # Create importer
-        importer = ConnectionImporter(guacamole_api_client)
+        # Create config with guacd settings from command-line arguments
+        config = Config()
+        config.set("guacd_host", parsed_args.guacd_host)
+        config.set("guacd_port", parsed_args.guacd_port)
+        config.set("guacd_encryption", parsed_args.guacd_encryption)
+
+        # Create importer with config
+        importer = ConnectionImporter(guacamole_api_client, config)
 
         # Import connections
         successful, total = importer.import_connections(parsed_args.csv_file)
