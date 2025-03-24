@@ -66,6 +66,9 @@ In this example:
 
 ## Development
 
+### Requirement
+- uv
+
 ### Setup Development Environment
 
 ```bash
@@ -74,13 +77,18 @@ git clone https://github.com/a60814billy/guacamole-csv-importer.git
 cd guacamole-csv-importer
 
 # Install development dependencies
-pipenv install
+uv sync --all-extras
+
+# active venv
+source .venv/bin/activate
 ```
 
 ### Running Tests
 
 ```bash
 pytest
+# or 
+uv run pytest
 ```
 
 ## License

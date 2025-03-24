@@ -307,10 +307,6 @@ dev = [
     { name = "types-requests", version = "2.32.0.20241016", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "types-requests", version = "2.32.0.20250306", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
 ]
-typing = [
-    { name = "types-requests", version = "2.32.0.20241016", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
-    { name = "types-requests", version = "2.32.0.20250306", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -328,7 +324,6 @@ dev = [
     { name = "ruff", specifier = ">=0.11.2" },
     { name = "types-requests", specifier = ">=2.32.0.20241016" },
 ]
-typing = [{ name = "types-requests" }]
 
 [[package]]
 name = "idna"
